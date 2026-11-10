@@ -19,24 +19,25 @@ Open `index.html` in a browser. Everything works straight from disk.
 | `lib/p5.min.js` | p5.js 2.3.4 |
 | `learning/` | The method (`SKILL.md`) and the learning log (`log.md`), so the work can continue on another computer. See `learning/README.md` |
 
+## Working on the piece
+
+1. Open this folder in a code editor and edit `piece/sketch.js`. That is the only file you need to touch.
+2. Open `piece/index.html` in a browser and keep it next to the editor.
+3. Save, refresh, look. If the sketch has a mistake, a red box above the sheet says what went wrong, and on which line when it can tell. The browser's console has the full details (Cmd+Option+J in Chrome).
+
 ## Publish it with GitHub Pages
 
-1. Create a new, empty repository on GitHub, signed in to the account you want it under.
-2. In a terminal, from this folder:
+The site is live at <https://vermaditya1999.github.io/generative-print-series/>, served from the `main` branch of [vermaditya1999/generative-print-series](https://github.com/vermaditya1999/generative-print-series). Every push to `main` republishes it, usually within a minute or two.
 
-   ```
-   git init
-   git add .
-   git commit -m "Chapter 1"
-   git branch -M main
-   git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO.git
-   git push -u origin main
-   ```
+To publish a change, in a terminal, from this folder:
 
-3. On GitHub, open the repository's **Settings**, then **Pages** in the sidebar.
-4. Under **Build and deployment**, set **Source** to **Deploy from a branch**. Choose the `main` branch and the `/ (root)` folder, then **Save**.
+```
+git add -A
+git commit -m "Chapter 1: a grid of strokes"
+git push
+```
 
-The site is usually served at `https://YOUR-USERNAME.github.io/YOUR-REPO/` shortly afterwards. Every later push to `main` republishes it.
+The commit message is for you: one line saying what changed.
 
 The empty `.nojekyll` file tells GitHub Pages to serve these files exactly as they are.
 

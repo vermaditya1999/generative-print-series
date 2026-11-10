@@ -14,13 +14,62 @@
   main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 16px 20px; }
   canvas { width: auto !important; height: auto !important; max-width: 100%; max-height: 100%;
            background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 18px 40px -20px rgba(0,0,0,.4); }
-  @media (prefers-color-scheme: dark) { body { background: #131517; color: #9aa3ad; } header a { color: #74c2f2; } }
+  /* The red line that appears above the sheet when the sketch stops with an error. */
+  #error { margin: 0 16px 14px; padding: 10px 14px; border-radius: 6px; background: #fbe9e7; color: #a3261b;
+           font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (prefers-color-scheme: dark) { body { background: #131517; color: #9aa3ad; } header a { color: #74c2f2; }
+                                        #error { background: #3b1a17; color: #ffb4a8; } }
 </style>
 </head>
 <body>
 <header><a href="../index.html">‹ Back to the guide</a><span>The piece</span></header>
+<p id="error" role="alert" hidden></p>
 <main></main>
+<script>
+  // If the sketch stops with an error, say so above the sheet, so that a mistake
+  // doesn't look like an empty page. The browser's console has the full details.
+  window.__pieceError = (function () {
+    const box = document.getElementById('error');
+    function say(text) {
+      box.textContent = text + '\n\nThe console has the full details (Cmd+Option+J in Chrome).';
+      box.hidden = false;
+    }
+    function show(err) {
+      if (!box.hidden) return;   // the first error is the one to fix; later ones often follow from it
+      const msg = (err && err.message) || String(err || '');
+      const at = String((err && err.stack) || '').match(/sketch\.js:(\d+)/);
+      if (!msg || msg === 'Script error.') say('The sketch stopped with an error.');
+      else say('The sketch stopped' + (at ? ' at line ' + at[1] + ' of sketch.js' : '') + ':\n' + msg);
+    }
+    window.addEventListener('error', (e) => show(e.error || e));
+    window.addEventListener('unhandledrejection', (e) => show(e.reason));
+    return { show, say };
+  })();
+</script>
 <script src="../lib/p5.min.js"></script>
 <script src="sketch.js"></script>
+<script>
+  // Opened straight from disk, the browser hides the details of errors in sketch.js.
+  // Catching them where p5 calls into the sketch keeps the message and the line.
+  (function () {
+    const { show, say } = window.__pieceError;
+    if (typeof window.setup !== 'function' && typeof window.draw !== 'function') {
+      say('sketch.js could not be read. This is usually a typo, such as a missing bracket, comma or quote.');
+      return;
+    }
+    ['setup', 'draw', 'windowResized', 'keyPressed', 'keyReleased', 'keyTyped', 'mousePressed', 'mouseReleased',
+     'mouseClicked', 'doubleClicked', 'mouseMoved', 'mouseDragged', 'mouseWheel'].forEach((name) => {
+      const fn = window[name];
+      if (typeof fn !== 'function') return;
+      window[name] = function () {
+        try {
+          const r = fn.apply(this, arguments);
+          if (r && typeof r.then === 'function') r.catch(show);   // an async setup()
+          return r;
+        } catch (err) { show(err); throw err; }
+      };
+    });
+  })();
+</script>
 </body>
 </html>
