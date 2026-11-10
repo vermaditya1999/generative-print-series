@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1. Coordinates and angles · Generative Print Series</title>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<main class="col">
+  <nav class="crumbs" aria-label="Guide"><a href="../index.html">‹ All chapters</a><span class="label">Chapter 1 of 10</span></nav>
+  <h1 class="chapter-title">Coordinates and angles</h1>
+  <p class="lede">How to put a stroke exactly where you want it, pointing exactly the way you want. Everything else in this series is built from this one move.</p>
+
+  <nav class="parts" data-parts aria-label="Parts of this chapter">
+    <button type="button" data-go="problem" aria-current="true">The problem</button>
+    <button type="button" data-go="idea" aria-current="false">How it works</button>
+    <button type="button" data-go="practice" aria-current="false">Practice</button>
+    <button type="button" data-go="piece" aria-current="false">Your piece</button>
+    <button type="button" data-go="wrap" aria-current="false">Wrap-up</button>
+  </nav>
+
+  <!-- ================= The problem ================= -->
+  <section class="part" data-part="problem">
+    <p class="story">In February 1965, a mathematician named Georg Nees hung a set of drawings in a small university gallery in Stuttgart. He hadn't drawn them by hand. A pen plotter had, steered by a program he'd written, and they are generally counted as the first computer graphics ever shown as works of art.</p>
+    <p class="story">A few years later he made the picture he's best known for: a grid of small squares. At the top of the sheet they sit in tidy rows. Further down they begin to tilt and wander, and by the bottom they've tumbled into a heap. He called it <em>Schotter</em>, which is German for gravel, and it's <a href="https://collections.vam.ac.uk/item/O221321/schotter-print-nees-georg/">in the Victoria and Albert Museum</a> now.</p>
+    <p>What I love about it is how little it's made of. A plotter understands one kind of instruction: put the pen here, and drag it there. Nees gave it that instruction over and over, with slightly different numbers each time, and got a picture people are still looking at nearly sixty years later.</p>
+    <p>This chapter is about that instruction. By the end you'll be able to say "start here, go this way, this far" in code, and you'll have a page of strokes of your own to show for it.</p>
+
+    <h3>Your first stroke</h3>
+    <p>Let's start with the smallest drawing there is: one short stroke on a page. Here's the brief.</p>
+    <ul>
+      <li>It starts 30% of the way across the page and 40% of the way down.</li>
+      <li>It's a tenth of the page's width long.</li>
+      <li>It points 30 degrees below "straight right".</li>
+    </ul>
+    <figure class="fig">
+      <canvas class="sheet" role="img" id="figProblem" style="--w:250px" width="250" height="312" aria-label="A page with a start point marked 30 percent across and 40 percent down, and a short stroke leading to a question mark"></canvas>
+    </figure>
+    <p>Two questions. Take a real swing at both before you read on.</p>
+    <p><strong>First:</strong> where does the stroke end?</p>
+    <p><strong>Second:</strong> right now the page is 800 pixels wide, because that's what fits on your screen. On the day you print it, it will be 6,000 pixels wide. What has to be true of your code so that the same drawing comes out right both times?</p>
+    <textarea id="attempt" data-save="ch01.attempt" aria-label="My attempt at the opening problem" placeholder="Where does it end? What has to be true of the code?"></textarea>
+    <p class="muted small">Write something, even if it's a guess. You'll read the next part very differently if you're checking it against an answer of your own. What you type is saved in this browser and nowhere else.</p>
+    <div class="next"><span class="muted small">Had a go?</span><button class="primary" type="button" data-go="idea">Show me how it works</button></div>
+  </section>
+
+  <!-- ================= How it works ================= -->
+  <section class="part" data-part="idea" hidden>
+    <h3>The page is a grid of numbers</h3>
+    <p>Every drawing tool you've ever used, from MS Paint to Figma, quietly agrees on one thing: a spot on the page is a pair of numbers. How far across, and how far down. Everyone calls them x and y.</p>
+    <p>The spot where both are zero is the top-left corner. x grows as you move right, which is what you'd expect. y grows as you move <em>down</em>, which is the opposite of every graph you drew at school.</p>
+    <p>There's no deep reason for that. Early screens painted their picture the way you read a page, one line at a time from the top, so the top line became line zero. By the time anyone thought to object, there was far too much software to change. It's a convention: you can't work it out, you just have to know it. I'll point these out as we go, because half of learning a field is telling its logic from its habits.</p>
+    <p>In p5, <code>createCanvas(800, 1000)</code> gives you a page 800 pixels across and 1,000 down, and <code>line(x1, y1, x2, y2)</code> draws from one spot to another.</p>
+
+    <h3>Stop thinking in pixels</h3>
+    <p>Let's take your second question first, because the answer changes how we write everything from here on.</p>
+    <p>"30% of the way across" is 240 pixels on an 800-pixel page. On the 6,000-pixel page at the print shop, it's 1,800. Same spot on the paper, completely different number. The pixel count is a fact about the screen. The 30% is a fact about the drawing.</p>
+    <p>So we'll describe the drawing in its own terms and convert to pixels at the last possible moment. Our unit is the width of the page. The page is 1 wide, and since ours is 800 by 1,000, it's 1.25 tall. Halfway across is 0.5. A tenth of the width is 0.1.</p>
+    <p>If you've written CSS, you already believe this. It's why you reach for <code>%</code> and <code>rem</code> instead of hard-coding <code>px</code>: you say what you mean relative to something, and let the device work out the pixels.</p>
+    <p>In code the conversion is one tiny function, and it's the only place pixels are allowed to show up:</p>
+    <pre>const px = (u) =&gt; u * width;   // page units in, pixels out</pre>
+    <p>(<code>width</code> is p5's name for how many pixels wide the canvas is.)</p>
+    <figure class="fig">
+      <canvas class="sheet" id="figPage" style="--w:340px;touch-action:none" width="340" height="425" aria-label="A page you can point at to read the coordinates of one spot"></canvas>
+      <figcaption>Move your pointer over the sheet. On an 800 px page this spot is <span class="mono" id="pgS">(240, 320)</span>. On a 6,000 px page it's <span class="mono" id="pgL">(1,800, 2,400)</span>. In page units it's <span class="mono" id="pgU">(0.300, 0.400)</span> either way.</figcaption>
+    </figure>
+
+    <h3>A direction is an angle</h3>
+    <p>Now your first question: where does the stroke end?</p>
+    <p>In our diagnostic you told me the answer is x + 5 cos θ, y + 5 sin θ, and that it took you a while to get there. You were right. I'd like you to be able to rebuild that formula from nothing, though, so that you never have to remember it. Here's where it comes from.</p>
+    <p>Draw a circle of radius 1 around the start point. Now walk around it, starting from "straight right", through some angle. Mathematicians call the angle θ (theta), for no better reason than habit. Wherever you stop, you've moved some distance <span class="cx">across</span> and some distance <span class="mx">down</span>.</p>
+    <p>Those two distances have names. The across part is called cos θ and the down part is called sin θ. That's all cos and sin are. You hand them an angle, and they tell you how far across and how far down a single step in that direction takes you.</p>
+    <p>And if your step is longer than 1? Everything just scales. A step of length L goes L cos θ across and L sin θ down.</p>
+    <figure class="fig">
+      <canvas class="sheet" role="img" id="figStep" style="--w:340px" width="340" height="340" aria-label="A circle showing how an angle and a length become an across part and a down part"></canvas>
+      <div class="ctls" style="--w:340px">
+        <label class="ctl" for="ang"><span>Angle θ</span><output id="angV" for="ang">30°</output><input id="ang" type="range" min="0" max="360" step="1" value="30"></label>
+        <label class="ctl" for="len"><span>Length L</span><output id="lenV" for="len">1.00</output><input id="len" type="range" min="0.2" max="1" step="0.05" value="1"></label>
+      </div>
+      <figcaption><span class="mono" id="stDeg">30°</span> is <span class="mono" id="stRad">0.524</span> radians. The step goes <span class="mono cx" id="stX">0.866</span> across and <span class="mono mx" id="stY">0.500</span> down. Drag the angle and watch which way the stroke swings.</figcaption>
+    </figure>
+
+    <p class="idea">A stroke is a start point plus a step.</p>
+    <p>Start somewhere, add a step, and that's where you end.</p>
+    <p class="eq">end x = start x + L cos θ<br>end y = start y + L sin θ</p>
+    <p>For our stroke, the start is (0.3, 0.4), L is 0.1 and θ is 30°. cos 30° is about 0.866 and sin 30° is exactly 0.5. So the stroke ends at (0.3 + 0.0866, 0.4 + 0.05), which is (0.3866, 0.45). How close was your guess?</p>
+    <p>I meant it about this being the whole chapter. Every mark we make between here and the final print is this move. Even the long flowing curves of chapter 5 are just hundreds of tiny steps, taken one after another.</p>
+
+    <h3>Two things that will bite you</h3>
+    <p><strong>Angles run clockwise.</strong> Because y grows downward, a bigger angle swings the stroke the way a clock's hands move. 0° points at 3 o'clock, 90° at 6, 180° at 9. In a maths textbook, where y grows upward, it runs the other way. The formula is identical and only the picture is flipped. You saw it in the figure: more angle, and the stroke dipped.</p>
+    <p><strong>p5 thinks in radians.</strong> <code>cos()</code> and <code>sin()</code> don't take degrees. They take radians, where half a turn is π (about 3.14) instead of 180. To convert, multiply degrees by π / 180, or let p5 do it with <code>radians(30)</code>. If you write <code>cos(30)</code> meaning thirty degrees, p5 will cheerfully hand you the cosine of 30 radians, which is nearly five full turns, and your stroke will point somewhere baffling. Everybody does this once.</p>
+    <p class="muted">(You can switch p5 to degrees with <code>angleMode(DEGREES)</code>. I'd stay in radians. Most of the code you'll read uses them, and the maths in later chapters comes out cleaner.)</p>
+
+    <h3>From one stroke to a page of them</h3>
+    <p>One stroke is a mark. A few hundred, placed with some care, is a composition, and the way to get a few hundred of anything is a loop.</p>
+    <p>Say you want ten columns of strokes, with a margin down each side so that nothing touches the edge of the paper. Call the margin m. The space between the margins is 1 − 2m wide. Cut that into ten equal cells and each one is (1 − 2m) / 10 wide.</p>
+    <p>Where's the middle of a cell? Start at the left margin, skip the cells before yours, then go half a cell further:</p>
+    <p class="eq">x = m + (i + 0.5) × cell width</p>
+    <p>Here i is the cell's number, counted from 0 the way programmers do. That stray 0.5 is the "half a cell further". Leave it out and every stroke sticks to the left edge of its cell instead of sitting in the middle. Rows work exactly the same way, with y.</p>
+    <figure class="fig">
+      <canvas class="sheet" id="figCells" style="--w:520px" width="520" height="104" aria-label="A strip of the page divided into cells between two margins, with each centre marked"></canvas>
+      <div class="ctls" style="--w:340px">
+        <label class="ctl" for="nCols"><span>Columns</span><output id="nColsV" for="nCols">10</output><input id="nCols" type="range" min="2" max="20" step="1" value="10"></label>
+        <label class="ctl" for="mar"><span>Margin m</span><output id="marV" for="mar">0.10</output><input id="mar" type="range" min="0" max="0.3" step="0.01" value="0.1"></label>
+      </div>
+      <figcaption>Tap a cell. Each cell is <span class="mono" id="ceW">(1 − 2 × 0.10) / 10 = 0.0800</span> wide. Cell <span class="mono" id="ceI">0</span> is centred at <span class="mono" id="ceX">0.10 + 0.5 × 0.0800 = 0.1400</span>.</figcaption>
+    </figure>
+
+    <h3>The mistake almost everyone makes</h3>
+    <p class="wrongidea">"A drawing is made of pixels."</p>
+    <p>It's an easy thing to believe, because the canvas speaks pixels. Nearly every p5 example you'll find writes something like <code>line(240, 320, 310, 360)</code>, and on screen it works perfectly.</p>
+    <p>It stops working the day you print. Below are two copies of the same small drawing. The left one was written the usual way, with pixel numbers that suited a small screen. The right one was written in page units. Drag the slider to make the output bigger, as you would for a print, and watch each one.</p>
+    <figure class="fig">
+      <div class="pair">
+        <div><canvas class="sheet" role="img" id="figPx" width="210" height="262" aria-label="The drawing written in pixel numbers"></canvas><span>Written in pixels</span></div>
+        <div><canvas class="sheet" role="img" id="figUn" width="210" height="262" aria-label="The drawing written in page units"></canvas><span>Written in page units</span></div>
+      </div>
+      <div class="ctls" style="--w:340px">
+        <label class="ctl" for="outW"><span>Output width</span><output id="outWV" for="outW">200 px</output><input id="outW" type="range" min="200" max="1600" step="50" value="200"></label>
+      </div>
+      <figcaption>The pixel version shrinks into a corner and its lines thin to hairs. The page-unit version doesn't notice.</figcaption>
+    </figure>
+    <p>A drawing isn't pixels. It's a set of positions and sizes relative to a page, and pixels are only how one particular device happens to show it. That goes for the thickness of a line too. It's a size, so it's set in page units like everything else: <code>strokeWeight(px(0.002))</code>, never <code>strokeWeight(2)</code>.</p>
+    <div class="next"><span class="muted small">Enough reading. Your turn to do it by hand.</span><button class="primary" type="button" data-go="practice">Go to practice</button></div>
+  </section>
+
+  <!-- ================= Practice ================= -->
+  <section class="part" data-part="practice" hidden>
+    <h3>One worked example</h3>
+    <p>Before you try some yourself, here's our stroke once more, slowly, with every step shown. It starts at (0.3, 0.4), it's 0.1 long, and it points at 30°.</p>
+    <ol>
+      <li><strong>Get the angle into radians.</strong> 30 × π / 180 is about 0.5236. In p5 you'd write <code>radians(30)</code>.</li>
+      <li><strong>Ask cos and sin for a step of length 1.</strong> cos 30° is about 0.866 and sin 30° is 0.5. So one unit in this direction is 0.866 across and 0.5 down.</li>
+      <li><strong>Scale it to the length you want.</strong> Our stroke is 0.1 long, so the step is 0.0866 across and 0.05 down.</li>
+      <li><strong>Add the step to the start.</strong> (0.3 + 0.0866, 0.4 + 0.05) is (0.3866, 0.45).</li>
+      <li><strong>Check it against the picture.</strong> x went up, so the stroke moved right. y went up too, and bigger y is lower on the page. Right and a little down is what was asked for.</li>
+      <li><strong>Only now, pixels.</strong> On the 800-pixel page the stroke runs from (240, 320) to (309.3, 360). On the 6,000-pixel page it runs from (1,800, 2,400) to (2,319.6, 2,700). Same stroke.</li>
+    </ol>
+    <p>Step 5 is the one people skip, and it's the one that catches mistakes. A formula will happily give you a wrong answer. A picture in your head is much harder to fool.</p>
+
+    <h3>Your turn</h3>
+    <p>Seven problems. Work them on paper, fill in every answer, and submit the lot together at the bottom. The answers appear once you've submitted, and not before. A calculator is fine. So is getting some wrong: that's what they're for.</p>
+
+    <div class="set" data-set="ch01">
+      <div class="q" data-q="1">
+        <p><strong>1. Fill in the gaps.</strong> A stroke starts at (0.5, 0.5), is 0.2 long, and points at 135°. You'll need cos 135° ≈ −0.7071 and sin 135° ≈ 0.7071.</p>
+        <p class="fill">The step is ( <input class="blank" data-a="-0.1414" inputmode="decimal" aria-label="Problem 1, step across"> , <input class="blank" data-a="0.1414" inputmode="decimal" aria-label="Problem 1, step down"> ).<br>
+          The stroke ends at ( <input class="blank" data-a="0.3586" inputmode="decimal" aria-label="Problem 1, end x"> , <input class="blank" data-a="0.6414" inputmode="decimal" aria-label="Problem 1, end y"> ).<br>
+          On screen it points <select class="blank" data-a="left and down" aria-label="Problem 1, direction on screen"><option value="">choose</option><option>right and down</option><option>left and down</option><option>left and up</option><option>right and up</option></select>.</p>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>The step is 0.2 × (−0.7071, 0.7071), which is (−0.1414, 0.1414). Add it to the start and the stroke ends at (0.3586, 0.6414). cos came out negative, so it goes left. sin came out positive, so it goes down the page.</p>
+        </div>
+      </div>
+
+      <div class="q" data-q="2">
+        <p><strong>2.</strong> A stroke starts at (0.2, 0.8), is 0.1 long, and points at 270°. Where does it end, and which way does it point on screen?</p>
+        <p class="fill">It ends at ( <input class="blank" data-a="0.2" inputmode="decimal" aria-label="Problem 2, end x"> , <input class="blank" data-a="0.7" inputmode="decimal" aria-label="Problem 2, end y"> ) and points <select class="blank" data-a="up" aria-label="Problem 2, direction on screen"><option value="">choose</option><option>up</option><option>down</option><option>left</option><option>right</option></select>.</p>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>cos 270° is 0 and sin 270° is −1, so the step is (0, −0.1): nothing across, and y gets smaller, which is up the page. It ends at (0.2, 0.7). On the clock, 270° is three quarters of the way round from 3 o'clock, which lands on 12.</p>
+        </div>
+      </div>
+
+      <div class="q" data-q="3">
+        <p><strong>3.</strong> What is 45° in radians? A stroke 0.05 long starts at (0.1, 0.1) and points that way. Where does it end?</p>
+        <p class="fill">45° is <input class="blank" data-a="0.7854" data-tol="0.003" inputmode="decimal" aria-label="Problem 3, radians"> radians. The stroke ends at ( <input class="blank" data-a="0.1354" inputmode="decimal" aria-label="Problem 3, end x"> , <input class="blank" data-a="0.1354" inputmode="decimal" aria-label="Problem 3, end y"> ).</p>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>45 × π / 180 is π / 4, about 0.7854. cos and sin of 45° are both about 0.7071, so the step is (0.0354, 0.0354) and the stroke ends at (0.1354, 0.1354).</p>
+        </div>
+      </div>
+
+      <div class="q" data-q="4">
+        <p><strong>4.</strong> A page has a margin of 0.1 down the left and right sides, and 10 columns in between. What is x at the centre of the first column (column 0) and of the last (column 9)?</p>
+        <p class="fill">Column 0 is centred at <input class="blank" data-a="0.14" inputmode="decimal" aria-label="Problem 4, column 0"> . Column 9 is centred at <input class="blank" data-a="0.86" inputmode="decimal" aria-label="Problem 4, column 9"> .</p>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>Each cell is (1 − 0.2) / 10 = 0.08 wide. Column 0 is at 0.1 + 0.5 × 0.08 = 0.14, and column 9 is at 0.1 + 9.5 × 0.08 = 0.86. A quick check: the first and last columns should mirror each other around the middle of the page, and 0.14 + 0.86 = 1.</p>
+        </div>
+      </div>
+
+      <div class="q" data-q="5">
+        <p><strong>5.</strong> So far every stroke has <em>started</em> at a point. Suppose you want a stroke of length L <em>centred</em> on a point (cx, cy) instead. Where does it start, and where does it end?</p>
+        <textarea class="own" aria-label="Problem 5, in your own words" placeholder="Words or symbols, whichever comes naturally."></textarea>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>Go half a step backwards from the centre to find the start, and half a step forwards to find the end. The start is (cx − (L/2) cos θ, cy − (L/2) sin θ). The end is (cx + (L/2) cos θ, cy + (L/2) sin θ). Hold on to this one. You'll need it in about ten minutes.</p>
+        </div>
+      </div>
+
+      <div class="q" data-q="6">
+        <p><strong>6.</strong> A clock face is centred at (0.5, 0.5). Its hour hand is 0.3 long and points at 7 o'clock. Where is the tip of the hand?</p>
+        <p class="fill">The tip is at ( <input class="blank" data-a="0.35" data-tol="0.003" inputmode="decimal" aria-label="Problem 6, tip x"> , <input class="blank" data-a="0.7598" data-tol="0.003" inputmode="decimal" aria-label="Problem 6, tip y"> ).</p>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>3 o'clock is angle 0, and each hour is another 30° clockwise, which on a canvas is the direction angles grow. From 3 to 7 is four hours, so the angle is 120°. cos 120° is −0.5 and sin 120° is about 0.866. The tip is at (0.5 − 0.15, 0.5 + 0.2598), which is (0.35, 0.7598). Left of centre and well below it, which is where 7 lives on a clock.</p>
+        </div>
+      </div>
+
+      <div class="q" data-q="7">
+        <p><strong>7.</strong> A friend hears about page units and says: "Why bother? I'll make my canvas 6,000 pixels wide from the start and write everything in pixels." What would you tell them?</p>
+        <textarea class="own" aria-label="Problem 7, in your own words" placeholder="What goes wrong with their plan?"></textarea>
+        <div class="answer" hidden>
+          <p class="verdict"></p>
+          <p>It works right up until something changes. Every number in their code is now welded to one size. They can't run a quick small version while they work, can't make a half-size proof, can't offer the piece on a bigger sheet, and can't move to a printer that wants a different resolution, without rewriting every number by hand. Page units cost one tiny function and turn the size into a single setting.</p>
+        </div>
+      </div>
+
+      <div class="submitbar">
+        <div class="row" data-before><button class="primary" type="button" data-submit>Submit all answers</button></div>
+        <div data-after hidden>
+          <p data-status role="status"></p>
+          <div class="row" style="margin-top:14px"><button class="quiet" type="button" data-copy-answers>Copy my answers</button><button class="quiet" type="button" data-again>Clear and start again</button></div>
+          <p class="muted small" style="margin-top:14px">"Copy my answers" puts your opening attempt and these answers on the clipboard, ready to paste into the chat for our session.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="next"><span class="muted small">Next, the first layer of your piece.</span><button class="primary" type="button" data-go="piece">Go to your piece</button></div>
+  </section>
+
+  <!-- ================= Your piece ================= -->
+  <section class="part" data-part="piece" hidden>
+    <p>Time to make something. This is the first layer of your piece: a page with margins and a grid of strokes. It's also, give or take a few details, where computer art began. Nees's gravel started out as a tidy grid, just like this one.</p>
+    <figure class="fig">
+      <div class="seg" role="group" aria-label="Which step to preview">
+        <button type="button" id="tgA" aria-pressed="true">Step 2, one angle</button>
+        <button type="button" id="tgB" aria-pressed="false">Step 3, turning</button>
+      </div>
+      <canvas class="sheet" role="img" id="figTarget" style="--w:320px" width="320" height="400" aria-label="The target drawing, a grid of short strokes"></canvas>
+      <div class="ctls" style="--w:320px">
+        <label class="ctl" for="tgAng"><span>The shared angle</span><output id="tgAngV" for="tgAng">30°</output><input id="tgAng" type="range" min="0" max="180" step="1" value="30"></label>
+      </div>
+      <figcaption>What your sketch should draw: 20 columns by 25 rows, a margin of 0.1, each mark 0.6 of a cell wide.</figcaption>
+    </figure>
+
+    <h3>Setting up</h3>
+    <p>Your sketch lives in the <code>piece</code> folder of this site, in a file called <code>sketch.js</code>. Open <code>piece/index.html</code> in a browser to see it run, and keep that tab open while you work. Change the code, save, refresh, look. That loop is most of what making this kind of work feels like, and it's a good one.</p>
+    <p>This is what's in <code>sketch.js</code> to begin with:</p>
+    <div class="prehead"><span class="label">piece/sketch.js</span><button class="quiet" type="button" data-copy="#starter">Copy</button></div>
+    <pre id="starter">// The piece.
+// Chapter 1: a page with margins and a grid of strokes.
+
+const px = (u) =&gt; u * width;   // page units in, pixels out
+
+function setup() {
+  createCanvas(800, 1000);     // the only pixel numbers in the file
+  noLoop();                    // draw once: this is a print, not an animation
+}
+
+function draw() {
+  background(255);
+  stroke(20);
+  strokeWeight(px(0.002));
+
+  // Your code goes here.
+}</pre>
+
+    <h3>What to build</h3>
+    <ol>
+      <li>Write a function <code>mark(cx, cy, angle, len)</code> that draws one stroke centred on (cx, cy). Everything it's given is in page units, and the angle is in radians. Don't call it <code>stroke</code>: p5 already has a <code>stroke()</code>, the one that sets the pen colour, and yours would quietly replace it.</li>
+      <li>Use it to fill the page. 20 columns by 25 rows, a margin of 0.1 on all four sides, one mark in the middle of each cell, all pointing the same way. Make each mark 0.6 of a cell wide, so that neighbours don't touch.</li>
+      <li>Now make the angle depend on the column, so that the marks turn steadily from 0 at the left edge to π at the right.</li>
+      <li>The print test. Change <code>createCanvas(800, 1000)</code> to <code>createCanvas(1600, 2000)</code> and refresh. The page in your browser is scaled to fit the window, so if you've done everything in page units, <em>the picture won't change at all</em>. If something moved, or the lines got thinner, there's a pixel number hiding in your code. Hunt it down.</li>
+    </ol>
+    <p>That fourth step matters more than it looks. It's the difference between a sketch and something you can print.</p>
+
+    <h3>Then play</h3>
+    <p>Once it works, break it on purpose. What if the angle depends on the row instead of the column? On both? What if the length changes across the page, or the thickness? You can't hurt anything, and ten minutes of poking at a sketch teaches things no chapter can. (Step 3, by the way, is a first taste of chapter 4.)</p>
+    <div class="next"><span class="muted small">When your grid draws and passes the print test, wrap up.</span><button class="primary" type="button" data-go="wrap">Wrap up</button></div>
+  </section>
+
+  <!-- ================= Wrap-up ================= -->
+  <section class="part" data-part="wrap" hidden>
+    <h3>Go deeper</h3>
+    <p>If you'd like a second voice on the same ideas, read the opening sections of <a href="https://natureofcode.com/oscillation/">Oscillation</a>, chapter 3 of Daniel Shiffman's <em>The Nature of Code</em>. It's free to read online, it's written in p5, and Shiffman is one of the warmest explainers the field has. Watch for the moment he turns an angle and a radius into an x and a y. It's this chapter's move, seen from the other side.</p>
+    <p>And do go and look at <a href="https://collections.vam.ac.uk/item/O221321/schotter-print-nees-georg/"><em>Schotter</em> at the V&amp;A</a>. Now that you know what a plotter was actually being told, try to work out how you'd draw it yourself.</p>
+
+    <h3>The recall list</h3>
+    <p>Seven questions that will come back, in later chapters and in our reviews. You don't need to answer them now. If you can answer them cold in three days, the chapter has stuck.</p>
+    <ol>
+      <li>Where is (0, 0) on a canvas, and which way does y grow?</li>
+      <li>Why describe a drawing in page units, and where are pixels allowed to appear?</li>
+      <li>What do cos θ and sin θ tell you about a step?</li>
+      <li>How do you find the end of a stroke from its start, its angle and its length?</li>
+      <li>Which way does a growing angle turn on a canvas, and why?</li>
+      <li>How do you turn degrees into radians?</li>
+      <li>How do you find the centre of cell i in a row of cells between two margins?</li>
+    </ol>
+
+    <h3>What happens next</h3>
+    <p>When your grid draws and survives the print test, come back to the chat. I'll ask you to explain this chapter in your own words, without this page open, and then give you one new problem. After that comes chapter 2, seeded randomness, where this tidy grid starts to loosen up.</p>
+    <div class="next"><span class="muted small">That's chapter 1.</span><a href="../index.html">Back to all chapters</a></div>
+  </section>
+</main>
+
+<script src="../assets/site.js"></script>
+<script>
+/* The figures for chapter 1. Each one is a sheet of paper drawn on a canvas. */
+(function () {
+  const $ = (id) => document.getElementById(id), TAU = GPS.TAU, f3 = GPS.f3, thousands = GPS.thousands;
+
+  /* The brief, drawn: a start point, a short stroke, and a question mark. */
+  GPS.figure(function () {
+    const f = GPS.sheet($('figProblem'), 1.25); if (!f) return;
+    const { c, w, t } = f, x = 0.3 * w, y = 0.4 * w, a = Math.PI / 6, L = 0.1 * w;
+    c.setLineDash([2, 5]); c.lineWidth = 1.5;
+    c.strokeStyle = t.c; c.beginPath(); c.moveTo(0, y); c.lineTo(x, y); c.stroke();
+    c.strokeStyle = t.m; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, y); c.stroke(); c.setLineDash([]);
+    c.fillStyle = t.cInk; c.fillText('30%', x / 2 - 11, y + 17);
+    c.fillStyle = t.mInk; c.fillText('40%', x + 8, y / 2 + 4);
+    const ex = x + L * Math.cos(a), ey = y + L * Math.sin(a);
+    c.strokeStyle = t.ink; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.stroke();
+    c.fillStyle = t.ink; c.beginPath(); c.arc(x, y, 4, 0, TAU); c.fill();
+    c.fillStyle = t.paper; c.lineWidth = 1.5; c.beginPath(); c.arc(ex, ey, 4, 0, TAU); c.fill(); c.stroke();
+    c.fillStyle = t.ink; c.font = '600 15px "IBM Plex Sans", system-ui, sans-serif'; c.fillText('?', ex + 9, ey + 10);
+  });
+
+  /* One spot, three names: page units, and pixels at two sizes. */
+  const spot = { u: 0.3, v: 0.4 };
+  const drawPage = GPS.figure(function () {
+    const f = GPS.sheet($('figPage'), 1.25); if (!f) return;
+    const { c, w, h, t } = f, x = spot.u * w, y = spot.v * w;
+    c.strokeStyle = t.rule; c.lineWidth = 1;
+    for (let i = 1; i < 10; i++) { c.beginPath(); c.moveTo(i * w / 10, 0); c.lineTo(i * w / 10, h); c.stroke(); }
+    for (let j = 1; j < 13; j++) { c.beginPath(); c.moveTo(0, j * w / 10); c.lineTo(w, j * w / 10); c.stroke(); }
+    c.fillStyle = t.muted; c.strokeStyle = t.muted; c.lineWidth = 1.2;
+    c.fillText('(0, 0)', 8, 18);
+    GPS.arrow(c, 52, 14, 82, 14); c.fillText('x', 88, 18);
+    GPS.arrow(c, 14, 30, 14, 60); c.fillText('y', 10, 76);
+    c.lineWidth = 2;
+    c.strokeStyle = t.c; c.beginPath(); c.moveTo(0, y); c.lineTo(x, y); c.stroke();
+    c.strokeStyle = t.m; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, y); c.stroke();
+    c.fillStyle = t.ink; c.beginPath(); c.arc(x, y, 5, 0, TAU); c.fill();
+    // the coordinates, coloured by the distance each one measures
+    const bits = [['(', t.ink], [spot.u.toFixed(3), t.cInk], [', ', t.ink], [spot.v.toFixed(3), t.mInk], [')', t.ink]];
+    const tw = bits.reduce((sum, b) => sum + c.measureText(b[0]).width, 0);
+    let lx = x + 10, ly = y + 21; if (lx + tw > w - 6) lx = x - tw - 10; if (ly > h - 8) ly = y - 12;
+    c.fillStyle = t.paper; c.fillRect(lx - 4, ly - 13, tw + 8, 18);
+    bits.forEach((b) => { c.fillStyle = b[1]; c.fillText(b[0], lx, ly); lx += c.measureText(b[0]).width; });
+    $('pgU').textContent = '(' + spot.u.toFixed(3) + ', ' + spot.v.toFixed(3) + ')';
+    $('pgS').textContent = '(' + thousands(spot.u * 800) + ', ' + thousands(spot.v * 800) + ')';
+    $('pgL').textContent = '(' + thousands(spot.u * 6000) + ', ' + thousands(spot.v * 6000) + ')';
+  });
+  (function () {
+    const cv = $('figPage'); let down = false;
+    const at = (e) => { const r = cv.getBoundingClientRect();
+      spot.u = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      spot.v = Math.min(1.25, Math.max(0, (e.clientY - r.top) / r.width)); drawPage(); };
+    cv.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse' || down) at(e); });
+    cv.addEventListener('pointerdown', (e) => { down = true; at(e); });
+    window.addEventListener('pointerup', () => { down = false; });
+  })();
+
+  /* A step, taken apart into its across part and its down part. */
+  const drawStep = GPS.figure(function () {
+    const f = GPS.sheet($('figStep'), 1); if (!f) return;
+    const { c, w, h, t } = f, deg = +$('ang').value, L = +$('len').value, th = deg * Math.PI / 180;
+    const ox = w / 2, oy = h / 2, R = w * 0.36, ex = ox + L * R * Math.cos(th), ey = oy + L * R * Math.sin(th);
+    c.strokeStyle = t.rule; c.lineWidth = 1; c.beginPath(); c.moveTo(14, oy); c.lineTo(w - 14, oy); c.moveTo(ox, 14); c.lineTo(ox, h - 14); c.stroke();
+    c.strokeStyle = t.muted; c.setLineDash([2, 5]); c.beginPath(); c.arc(ox, oy, R, 0, TAU); c.stroke(); c.setLineDash([]);
+    c.fillStyle = t.muted;
+    c.fillText('0°', ox + R + 7, oy - 7); c.fillText('90°', ox + 7, oy + R + 17); c.fillText('180°', ox - R - 34, oy - 7); c.fillText('270°', ox + 7, oy - R - 8);
+    c.strokeStyle = t.y; c.lineWidth = 7; c.lineCap = 'butt'; c.beginPath(); c.arc(ox, oy, R * 0.2, 0, th); c.stroke(); c.lineCap = 'round';
+    c.lineWidth = 3;
+    c.strokeStyle = t.c; c.beginPath(); c.moveTo(ox, oy); c.lineTo(ex, oy); c.stroke();
+    c.strokeStyle = t.m; c.beginPath(); c.moveTo(ex, oy); c.lineTo(ex, ey); c.stroke();
+    if (Math.abs(ex - ox) > 30) { c.fillStyle = t.cInk; c.fillText('L cos θ', (ox + ex) / 2 - 20, oy + (ey >= oy ? -9 : 18)); }
+    if (Math.abs(ey - oy) > 20) { c.fillStyle = t.mInk; c.fillText('L sin θ', ex + (ex >= ox ? 10 : -50), (oy + ey) / 2 + 4); }
+    c.strokeStyle = t.ink; c.lineWidth = 3.5; c.beginPath(); c.moveTo(ox, oy); c.lineTo(ex, ey); c.stroke();
+    c.fillStyle = t.ink; c.beginPath(); c.arc(ox, oy, 4, 0, TAU); c.fill(); c.beginPath(); c.arc(ex, ey, 5.5, 0, TAU); c.fill();
+    $('angV').textContent = deg + '°'; $('lenV').textContent = L.toFixed(2);
+    $('stDeg').textContent = deg + '°'; $('stRad').textContent = th.toFixed(3);
+    $('stX').textContent = f3(L * Math.cos(th)); $('stY').textContent = f3(L * Math.sin(th));
+  });
+  ['ang', 'len'].forEach((id) => $(id).addEventListener('input', drawStep));
+
+  /* Cells between two margins, and the centre of each. */
+  let cellI = 0;
+  const drawCells = GPS.figure(function () {
+    const cv = $('figCells'), n = +$('nCols').value, m = +$('mar').value, cw = (1 - 2 * m) / n; if (cellI > n - 1) cellI = n - 1;
+    if (!cv.clientWidth) return; const f = GPS.sheet(cv, Math.max(0.2, 104 / cv.clientWidth)), { c, w, h, t } = f;
+    const top = 14, bh = h - 46, X = (u) => u * w, xc = m + (cellI + 0.5) * cw;
+    c.fillStyle = t.rule; c.fillRect(0, top, X(m), bh); c.fillRect(X(1 - m), top, X(m), bh);
+    c.fillStyle = t.y; c.globalAlpha = 0.55; c.fillRect(X(m + cellI * cw), top, X(cw), bh); c.globalAlpha = 1;
+    c.strokeStyle = t.muted; c.lineWidth = 1; c.globalAlpha = 0.45;
+    for (let j = 0; j <= n; j++) { const x = Math.round(X(m + j * cw)) + 0.5; c.beginPath(); c.moveTo(x, top); c.lineTo(x, top + bh); c.stroke(); }
+    c.globalAlpha = 1; c.fillStyle = t.ink;
+    for (let j = 0; j < n; j++) { c.beginPath(); c.arc(X(m + (j + 0.5) * cw), top + bh / 2, j === cellI ? 5 : 2.5, 0, TAU); c.fill(); }
+    c.fillStyle = t.muted; c.fillText('0', 6, h - 10); c.fillText('1', w - 13, h - 10);
+    if (X(m) > 22) { c.fillText('m', X(m / 2) - 5, top + bh / 2 + 4); c.fillText('m', X(1 - m / 2) - 5, top + bh / 2 + 4); }
+    const lab = 'x = ' + xc.toFixed(4), lw = c.measureText(lab).width;
+    c.fillStyle = t.cInk; c.fillText(lab, Math.min(w - lw - 22, Math.max(22, X(xc) - lw / 2)), h - 10);
+    $('nColsV').textContent = n; $('marV').textContent = m.toFixed(2);
+    $('ceW').textContent = '(1 − 2 × ' + m.toFixed(2) + ') / ' + n + ' = ' + cw.toFixed(4); $('ceI').textContent = cellI;
+    $('ceX').textContent = m.toFixed(2) + ' + ' + (cellI + 0.5) + ' × ' + cw.toFixed(4) + ' = ' + xc.toFixed(4);
+  });
+  (function () {
+    const cv = $('figCells');
+    const pick = (e) => { const r = cv.getBoundingClientRect(), u = (e.clientX - r.left) / r.width, n = +$('nCols').value, m = +$('mar').value;
+      const i = Math.floor((u - m) / ((1 - 2 * m) / n)); if (i >= 0 && i < n && i !== cellI) { cellI = i; drawCells(); } };
+    cv.addEventListener('pointerdown', pick); cv.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') pick(e); });
+  })();
+  ['nCols', 'mar'].forEach((id) => $(id).addEventListener('input', drawCells));
+
+  /* A grid of marks. "unit" is the size of one page unit in drawing pixels. */
+  function marks(c, unit, weight, colour, cols, rows, angleOf) {
+    const m = 0.1, cw = (1 - 2 * m) / cols, ch = (1.25 - 2 * m) / rows; c.strokeStyle = colour; c.lineWidth = weight;
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const a = angleOf(i, j), x = (m + (i + 0.5) * cw) * unit, y = (m + (j + 0.5) * ch) * unit, l = 0.3 * cw * unit;
+      c.beginPath(); c.moveTo(x - l * Math.cos(a), y - l * Math.sin(a)); c.lineTo(x + l * Math.cos(a), y + l * Math.sin(a)); c.stroke(); }
+  }
+
+  /* The same drawing written in pixels and in page units, as the output grows. */
+  const drawPair = GPS.figure(function () {
+    const W = +$('outW').value; $('outWV').textContent = thousands(W) + ' px';
+    [['figPx', true], ['figUn', false]].forEach(([id, inPixels]) => {
+      const f = GPS.sheet($(id), 1.25); if (!f) return; const { c, w, t } = f, shrink = w / W;   // the output, shrunk to fit the figure
+      c.save(); c.scale(shrink, shrink);
+      if (inPixels) marks(c, 200, 1.6, t.ink, 6, 8, (i) => 0.4 + i * 0.3);        // numbers that suited a 200 px page
+      else marks(c, W, 0.008 * W, t.ink, 6, 8, (i) => 0.4 + i * 0.3);             // numbers in page units
+      c.restore();
+    });
+  });
+  $('outW').addEventListener('input', drawPair);
+
+  /* What the sketch should draw. */
+  let turning = false;
+  const drawTarget = GPS.figure(function () {
+    const f = GPS.sheet($('figTarget'), 1.25); if (!f) return; const { c, w, t } = f, a0 = +$('tgAng').value * Math.PI / 180;
+    $('tgAngV').textContent = turning ? 'by column' : $('tgAng').value + '°'; $('tgAng').disabled = turning;
+    marks(c, w, 0.0035 * w, t.ink, 20, 25, (i) => turning ? (i / 19) * Math.PI : a0);
+  });
+  $('tgAng').addEventListener('input', drawTarget);
+  const setTurning = (v) => { turning = v; $('tgA').setAttribute('aria-pressed', String(!v)); $('tgB').setAttribute('aria-pressed', String(v)); drawTarget(); };
+  $('tgA').addEventListener('click', () => setTurning(false)); $('tgB').addEventListener('click', () => setTurning(true));
+
+  GPS.redraw();
+})();
+</script>
+</body>
+</html>

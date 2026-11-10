@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The piece · Generative Print Series</title>
+<style>
+  /* The page is shown scaled to fit the window, whatever size the canvas really is.
+     So a drawing written in page units looks the same at 800 pixels wide and at 6,000. */
+  html, body { height: 100%; margin: 0; }
+  body { background: #e6e8eb; font: 14px/1.4 system-ui, sans-serif; color: #4a525b; display: flex; flex-direction: column; }
+  header { padding: 10px 16px; display: flex; justify-content: space-between; gap: 12px; }
+  header a { color: #0b63a8; text-decoration: none; }
+  main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 16px 20px; }
+  canvas { width: auto !important; height: auto !important; max-width: 100%; max-height: 100%;
+           background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 18px 40px -20px rgba(0,0,0,.4); }
+  @media (prefers-color-scheme: dark) { body { background: #131517; color: #9aa3ad; } header a { color: #74c2f2; } }
+</style>
+</head>
+<body>
+<header><a href="../index.html">‹ Back to the guide</a><span>The piece</span></header>
+<main></main>
+<script src="../lib/p5.min.js"></script>
+<script src="sketch.js"></script>
+</body>
+</html>
